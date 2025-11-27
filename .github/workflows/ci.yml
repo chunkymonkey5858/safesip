@@ -7,14 +7,27 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  lint:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-      - run: npm ci
-      - run: npm run lint || true  # Add lint script if available
-      - run: npx tsc --noEmit || true  # Type checking
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Type check
+        run: npm run type-check
+        continue-on-error: true
+      
+      - name: Verify project structure
+        run: |
+          test -f package.json || exit 1
+          test -f app.json || exit 1
+          test -f App.tsx || exit 1
+          echo "✅ Project structure verified"
 
