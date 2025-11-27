@@ -64,10 +64,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [sessions, setSessions] = useState<DrinkingSession[]>([]);
 
-  // Load sessions when user changes
+  // Load sessions when user changes, clear when user logs out
   useEffect(() => {
     if (userProfile) {
       loadSessions();
+    } else {
+      // Clear all app state when user logs out
+      setCurrentSession(null);
+      setBacSimulator(null);
+      setCurrentBAC(0);
+      setBacHistory([]);
+      setSessions([]);
+      setFriends([]);
+      setGroups([]);
     }
   }, [userProfile]);
 

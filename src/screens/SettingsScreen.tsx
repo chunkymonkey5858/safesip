@@ -106,26 +106,22 @@ const SettingsScreen = () => {
     await handleTakePhoto();
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              // Navigation will be handled by AppNavigator
-            } catch (error) {
-              Alert.alert('Error', 'Failed to log out. Please try again.');
-            }
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    try {
+      console.log('Logout button pressed, starting logout...');
+      // Close the settings modal first
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      }
+      // Perform logout
+      await logout();
+      console.log('Logout completed successfully');
+      // Navigation will automatically redirect to Login screen
+      // via AppNavigator when isAuthenticated becomes false
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
   };
 
   return (
@@ -226,7 +222,15 @@ const SettingsScreen = () => {
         </View>
 
         <View style={styles.section}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <TouchableOpacity 
+            style={styles.logoutButton} 
+            onPress={() => {
+              console.log('Logout button pressed!');
+              handleLogout();
+            }}
+            activeOpacity={0.7}
+            testID="logout-button"
+          >
             <Text style={styles.logoutButtonText}>Log Out</Text>
           </TouchableOpacity>
         </View>

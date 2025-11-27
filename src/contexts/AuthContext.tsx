@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
-      if (firebaseUser) {
+      if (firebaseUser && db) {
         // Load user profile from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
@@ -153,17 +153,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
-    if (isFirebaseConfigured && auth) {
-      try {
-        await signOut(auth);
-      } catch (error) {
-        console.error('Error signing out:', error);
+    try {
+      // Clear state first (before async operations)
+      setUser(null);
+      setUserProfile(null);
+      
+      // Sign out from Firebase if configured
+      if (isFirebaseConfigured && auth) {
+        try {
+          await signOut(auth);
+        } catch (firebaseError) {
+          console.error('Firebase sign out error:', firebaseError);
+          // Continue with local cleanup even if Firebase sign out fails
+        }
       }
+      
+      // Clear all storage
+      await AsyncStorage.multiRemove([
+        'userProfile',
+        'user',
+        'sessions',
+        'friends',
+        'groups',
+      ]);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Still clear state even if storage operations fail
+      setUser(null);
+      setUserProfile(null);
+      throw error;
     }
-    setUser(null);
-    setUserProfile(null);
-    await AsyncStorage.removeItem('userProfile');
-    await AsyncStorage.removeItem('user'); // Clear old user data
   };
 
   const updateMealState = async (mealState: 'fasted' | 'light' | 'heavy') => {
@@ -231,7 +250,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         updateMealState,
         updateProfilePicture,
-        isAuthenticated: !!user,
+        isAuthenticated: !!(user || userProfile),
       }}
     >
       {children}
